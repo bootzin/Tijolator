@@ -2,13 +2,13 @@
 
 namespace TP1
 {
-	public class Program
+	public static class Program
 	{
 		[STAThread]
 
-		static void Main(string[] args)
+		public static void Main()
 		{
-			using Game game = new Game(800, 600, "Jogo da bola e dos tijolo");
+			using Game game = new Game(640, 480, "Jogo da bola e dos tijolo");
 			game.Run(60);
 		}
 	}

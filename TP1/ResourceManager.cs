@@ -53,7 +53,7 @@ namespace TP1
 			}
 
 			StbImage.stbi_set_flip_vertically_on_load(0);
-			var img = ImageResult.FromMemory(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, texPath)), ColorComponents.RedGreenBlueAlpha);
+			var img = ImageResult.FromMemory(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, texPath)), alpha ? ColorComponents.RedGreenBlueAlpha : ColorComponents.RedGreenBlue);
 			GCHandle pinnedArray = GCHandle.Alloc(img.Data, GCHandleType.Pinned);
 			IntPtr pointer = pinnedArray.AddrOfPinnedObject();
 			tex.Generate(img.Width, img.Height, pointer);

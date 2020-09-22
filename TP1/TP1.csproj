@@ -8,12 +8,12 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Win32.SystemEvents" Version="4.7.0" />
     <PackageReference Include="OpenTK" Version="3.2.0" />
-    <PackageReference Include="OpenTK.GLControl" Version="3.1.0" />
     <PackageReference Include="StbImageSharp" Version="2.22.4" />
     <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="levels\" />
     <Folder Include="resources\" />
   </ItemGroup>
 
@@ -28,5 +28,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="XCOPY &quot;$(SolutionDir)TP1/resources&quot; &quot;$(TargetDir)resources&quot; /Y /S&#xD;&#xA;XCOPY &quot;$(SolutionDir)TP1/shaders&quot; &quot;$(TargetDir)shaders&quot; /Y /S&#xD;&#xA;echo d | XCOPY /D &quot;$(SolutionDir)TP1/levels&quot; &quot;$(TargetDir)levels&quot; /Y /S" />
+  </Target>
 
 </Project>

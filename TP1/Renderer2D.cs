@@ -17,18 +17,20 @@ namespace TP1
 			InitRenderdata();
 		}
 
-		public void DrawTexture(Texture2D tex, Vector2 position, Vector2 size, float rotation, Color color)
+		public void DrawTexture(Texture2D tex, Vector2 position, Vector2 size, float rotation, Color color) => DrawTexture(tex, position, size, rotation, color.ToVector3());
+
+		public void DrawTexture(Texture2D tex, Vector2 position, Vector2 size, float rotation, Vector3 color)
 		{
 			Matrix4 model;
-			model = Matrix4.CreateScale(size.X, size.Y, 1f) * Matrix4.CreateRotationZ((float)(Math.PI / 180) * rotation) * Matrix4.CreateTranslation(position.X, position.Y, 0f);
-			//model *= Matrix4.CreateTranslation(-.5f * size.X, -.5f * size.Y, 0);
-			//model *= ;
-			//model *= Matrix4.CreateTranslation(.5f * size.X, .5f * size.Y, 0);
-			//model *= ;
+			model = Matrix4.CreateScale(size.X, size.Y, 1f);
+			model *= Matrix4.CreateTranslation(-.5f * size.X, -.5f * size.Y, 0);
+			model *= Matrix4.CreateRotationZ((float)(Math.PI / 180) * rotation);
+			model *= Matrix4.CreateTranslation(.5f * size.X, .5f * size.Y, 0);
+			model *= Matrix4.CreateTranslation(position.X, position.Y, 0f);
 
 			Shader.Use();
 			Shader.SetMatrix4("model", model, false);
-			Shader.SetVector3f("spriteColor", color.ToVector3(), false);
+			Shader.SetVector3f("spriteColor", color, false);
 
 			GL.ActiveTexture(TextureUnit.Texture0);
 			tex.Bind();
@@ -36,7 +38,7 @@ namespace TP1
 			//GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, indices);
 			GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 			GL.BindVertexArray(0);
-			//GL.BindTexture(TextureTarget.Texture2D, 0);
+			GL.BindTexture(TextureTarget.Texture2D, 0);
 		}
 
 		private void InitRenderdata()
