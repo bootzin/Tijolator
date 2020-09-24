@@ -31,9 +31,11 @@ namespace TP1
 				new Vector3(color.X, color.Y, color.Z));
 		}
 
+		public void DrawTexture(Texture2D tex, Vector2 position, Vector2 size, float rotation, Vector3 color) => DrawTexture(tex, position, size, rotation, new Vector4(color, 1f));
+
 		public void DrawTexture(Texture2D tex, Vector2 position, Vector2 size, float rotation, Color color) => DrawTexture(tex, position, size, rotation, color.ToVector3());
 
-		public void DrawTexture(Texture2D tex, Vector2 position, Vector2 size, float rotation, Vector3 color)
+		public void DrawTexture(Texture2D tex, Vector2 position, Vector2 size, float rotation, Vector4 color)
 		{
 			Matrix4 model = Matrix4.CreateScale(size.X, size.Y, 1f);
 			model *= Matrix4.CreateTranslation(-.5f * size.X, -.5f * size.Y, 0);
@@ -43,7 +45,7 @@ namespace TP1
 
 			Shader.Use();
 			Shader.SetMatrix4("model", model, false);
-			Shader.SetVector3f("spriteColor", color, false);
+			Shader.SetVector4f("spriteColor", color, false);
 
 			GL.ActiveTexture(TextureUnit.Texture0);
 			tex.Bind();

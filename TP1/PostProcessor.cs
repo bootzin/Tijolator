@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using OpenTK;
-using OpenTK.Graphics;
+﻿using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using System;
 
 namespace TP1
 {
@@ -13,12 +10,11 @@ namespace TP1
 		public Texture2D Texture { get; set; } = new Texture2D();
 		public int Width { get; set; }
 		public int Height { get; set; }
-		public bool Confuse { get; set; }
-		public bool Chaos { get; set; }
-		public bool Shake { get; set; }
+		public bool Confuse { get; set; } = false;
+		public bool Chaos { get; set; } = false;
+		public bool Shake { get; set; } = false;
 
 		private int VAO;
-		private readonly int RBO;
 		private readonly int MSFBO;
 		private readonly int FBO;
 
@@ -30,7 +26,7 @@ namespace TP1
 
 			MSFBO = GL.GenFramebuffer();
 			FBO = GL.GenFramebuffer();
-			RBO = GL.GenRenderbuffer();
+			int RBO = GL.GenRenderbuffer();
 
 			GL.BindFramebuffer(FramebufferTarget.Framebuffer, MSFBO);
 			GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, RBO);

@@ -66,7 +66,6 @@ namespace TP1
 
 		private void Init()
 		{
-			int VBO;
 			float[] particle_quad = {
 				0.0f, 1.0f, 0.0f, 1.0f,
 				1.0f, 0.0f, 1.0f, 0.0f,
@@ -78,7 +77,7 @@ namespace TP1
 			};
 
 			GL.GenVertexArrays(1, out VAO);
-			GL.GenBuffers(1, out VBO);
+			int VBO = GL.GenBuffer();
 
 			GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
 			GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * particle_quad.Length, particle_quad, BufferUsageHint.StaticDraw);
@@ -120,7 +119,7 @@ namespace TP1
 
 		private Particle RespawnParticle(Particle particle, GameObject obj, Vector2 offset)
 		{
-			var rand = new Random();
+			var rand = Util.Random;
 			float random = (rand.Next(1, 101) - 50) / 10f;
 			float rColor = .1f + (rand.Next(1, 101) / 100f);
 			particle.Position = new Vector2(obj.Position.X + random, obj.Position.Y + random) + offset;

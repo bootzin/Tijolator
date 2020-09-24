@@ -8,13 +8,15 @@ namespace TP1
 {
 	public class GameLevel
 	{
+		private string FilePath;
 		public List<GameObject> Bricks { get; set; } = new List<GameObject>();
 
 		public void Load(string filePath, int levelWidth, int levelHeight)
 		{
 			Bricks.Clear();
 			List<uint> tileData = new List<uint>();
-			using StreamReader sr = new StreamReader(Path.Combine(AppContext.BaseDirectory, filePath));
+			FilePath = Path.Combine(AppContext.BaseDirectory, filePath);
+			using StreamReader sr = new StreamReader(FilePath);
 			string firstLine = sr.ReadLine();
 			int maxBricksPerRow = firstLine.Replace('\r', ' ').Replace('\n', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
 			string lvl = firstLine + '\n' + sr.ReadToEnd();
@@ -34,6 +36,11 @@ namespace TP1
 				if (!tile.Destroyed)
 					tile.Draw(renderer);
 			}
+		}
+
+		public void Reload(int width, int height)
+		{
+			Load(FilePath, width, height);
 		}
 
 		public bool IsCompleted() => Bricks.TrueForAll(b => (!b.IsSolid && b.Destroyed) || b.IsSolid);

@@ -9,7 +9,7 @@ namespace TP1
 		public bool Sticky { get; set; }
 		public bool Comet { get; set; }
 
-		public BallObject(Vector2 pos, float radius, Texture2D sprite, Vector3? color = null, Vector2? velocity = null) : base(pos, new Vector2(radius * 2), sprite, color, velocity) 
+		public BallObject(Vector2 pos, float radius, Texture2D sprite, Vector3? color = null, Vector2? velocity = null) : base(pos, new Vector2(radius * 2), sprite, color, velocity)
 		{
 			Radius = radius;
 		}
