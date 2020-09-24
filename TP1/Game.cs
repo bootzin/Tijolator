@@ -25,6 +25,7 @@ namespace TP1
 		public Difficulty Difficulty { get; set; }
 		public List<Difficulty> Difficulties { get; set; } = new List<Difficulty>();
 
+		public List<BallObject> Balls { get; set; } = new List<BallObject>();
 		public BallObject Ball { get; set; }
 		private readonly float BALL_RADIUS = 12.5f;
 		private const float BALL_X_SPEED = 8;
@@ -47,9 +48,9 @@ namespace TP1
 			GL.Enable(EnableCap.Blend);
 			GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-			Difficulties.Add(new Difficulty("easy", -12f, .65, 4));
-			Difficulties.Add(new Difficulty("medium", -14f, .45, 3));
-			Difficulties.Add(new Difficulty("hard", -16f, .15, 2));
+			Difficulties.Add(new Difficulty("easy", -12f, .65, 4, 2));
+			Difficulties.Add(new Difficulty("medium", -14f, .45, 3, 1));
+			Difficulties.Add(new Difficulty("hard", -16f, .15, 2, 0));
 
 			Difficulty = Difficulties[0];
 
@@ -117,6 +118,7 @@ namespace TP1
 			Vector2 ballStartPos = playerStartPos + new Vector2((Player.Size.X / 2f) - BALL_RADIUS, -BALL_RADIUS * 2f);
 			BALL_VELOCITY = new Vector2(GetRandomBallSpeed(), Difficulty.BallUpSpeed);
 			Ball = new BallObject(ballStartPos, BALL_RADIUS, ResourceManager.GetTex("ball"), Color.Pink.ToVector3(), velocity: BALL_VELOCITY);
+			Balls.Add(Ball);
 
 			ParticleGenerator = new ParticleGenerator(ResourceManager.GetShader("particle"), ResourceManager.GetTex("particle"), 500);
 
@@ -140,7 +142,9 @@ namespace TP1
 				base.OnUpdateFrame(e);
 				ProcessEvents();
 
-				if (Ball.Position.Y > Height)
+				Balls.RemoveAll(b => b.Position.Y >= Height);
+
+				if (Balls.Count == 0)
 				{
 					Lives--;
 					if (Lives == 0)
@@ -148,7 +152,13 @@ namespace TP1
 						Reset();
 						return;
 					}
+					Balls.Add(Ball);
 					ResetPlayer();
+				} 
+				else
+				{
+					Ball = Balls[0];
+					Ball.Color = new Vector3(1);
 				}
 
 				float x = Math.Max(Math.Min((float)(Player.Position.X + (PLAYER_VELOCITY * e.Time)), Width - Player.Size.X), 0);
@@ -162,9 +172,12 @@ namespace TP1
 				}
 				Player.Position = new Vector2(x, Player.Position.Y);
 
-				Ball.Move((float)e.Time, Width);
-				if (Ball.Stuck)
-					Ball.Position += Player.Velocity;
+				Balls.ForEach(ball =>
+				{
+					ball.Move((float)e.Time, Width);
+					if (ball.Stuck)
+						ball.Position += Player.Velocity;
+				});
 
 				ParticleGenerator.Update((float)e.Time, Ball, 2, new Vector2(Ball.Radius / 2f));
 
@@ -192,7 +205,7 @@ namespace TP1
 			Levels[Level].Draw(Renderer);
 			Player.Draw(Renderer);
 			ParticleGenerator.Draw();
-			Ball.Draw(Renderer);
+			Balls.ForEach(ball => ball.Draw(Renderer));
 			PowerUps.ForEach(p =>
 			{
 				if (!p.Destroyed)
@@ -285,7 +298,7 @@ namespace TP1
 			}
 			if (State == GameState.Active && e.Key == Key.Space)
 			{
-				Ball.Stuck = false;
+				Balls.ForEach(ball => ball.Stuck = false);
 			}
 			if (State == GameState.Menu)
 			{
@@ -381,65 +394,67 @@ namespace TP1
 
 		private void DoCollisions()
 		{
-			foreach (GameObject box in Levels[Level].Bricks)
+			Balls.ForEach(ball =>
 			{
-				Collision col = Ball.CheckCollision(box);
-				if (!box.Destroyed && col.Colliding)
+				foreach (GameObject box in Levels[Level].Bricks)
 				{
-					if (!box.IsSolid)
+					Collision col = ball.CheckCollision(box);
+					if (!box.Destroyed && col.Colliding)
 					{
-						box.Destroyed = true;
-						SpawnPowerUps(box);
-						SoundEngine.Instance.PlaySound(ResourceManager.GetSound("bleepBrick"));
-					}
-					else
-					{
-						PostProcessor.Shake = true;
-						shakeTime = .05f;
-						SoundEngine.Instance.PlaySound(ResourceManager.GetSound("solid"));
-					}
-
-					if (!Ball.Comet || box.IsSolid)
-					{
-						float pen;
-						switch (col.Direction)
+						if (!box.IsSolid)
 						{
-							case Direction.Left:
-							case Direction.Right:
-								Ball.Velocity = new Vector2(-Ball.Velocity.X, Ball.Velocity.Y);
-								pen = Ball.Radius - Math.Abs(col.Vector.X);
-								if (col.Direction == Direction.Left)
-									Ball.Position = new Vector2(Ball.Position.X + pen, Ball.Position.Y);
-								else
-									Ball.Position = new Vector2(Ball.Position.X - pen, Ball.Position.Y);
-								break;
-							default:
-								Ball.Velocity = new Vector2(Ball.Velocity.X, -Ball.Velocity.Y);
-								pen = Ball.Radius - Math.Abs(col.Vector.Y);
-								if (col.Direction == Direction.Up)
-									Ball.Position = new Vector2(Ball.Position.X, Ball.Position.Y - pen);
-								else
-									Ball.Position = new Vector2(Ball.Position.X, Ball.Position.Y + pen);
-								break;
+							box.Destroyed = true;
+							SpawnPowerUps(box);
+							SoundEngine.Instance.PlaySound(ResourceManager.GetSound("bleepBrick"));
 						}
-						break;
+						else
+						{
+							PostProcessor.Shake = true;
+							shakeTime = .05f;
+							SoundEngine.Instance.PlaySound(ResourceManager.GetSound("solid"));
+						}
+
+						if (!ball.Comet || box.IsSolid)
+						{
+							float pen;
+							switch (col.Direction)
+							{
+								case Direction.Left:
+								case Direction.Right:
+									ball.Velocity = new Vector2(-ball.Velocity.X, ball.Velocity.Y);
+									pen = ball.Radius - Math.Abs(col.Vector.X);
+									if (col.Direction == Direction.Left)
+										ball.Position = new Vector2(ball.Position.X + pen, ball.Position.Y);
+									else
+										ball.Position = new Vector2(ball.Position.X - pen, ball.Position.Y);
+									break;
+								default:
+									ball.Velocity = new Vector2(ball.Velocity.X, -ball.Velocity.Y);
+									pen = ball.Radius - Math.Abs(col.Vector.Y);
+									if (col.Direction == Direction.Up)
+										ball.Position = new Vector2(ball.Position.X, ball.Position.Y - pen);
+									else
+										ball.Position = new Vector2(ball.Position.X, ball.Position.Y + pen);
+									break;
+							}
+							break;
+						}
 					}
 				}
-			}
+				Collision playerBallCol = ball.CheckCollision(Player);
+				if (!ball.Stuck && playerBallCol.Colliding)
+				{
+					float paddleCenter = Player.Position.X + (Player.Size.X / 2);
+					float distance = ball.Position.X + ball.Radius - paddleCenter;
+					float percentage = distance / (Player.Size.X / 2);
 
-			Collision playerBallCol = Ball.CheckCollision(Player);
-			if (!Ball.Stuck && playerBallCol.Colliding)
-			{
-				float paddleCenter = Player.Position.X + (Player.Size.X / 2);
-				float distance = Ball.Position.X + Ball.Radius - paddleCenter;
-				float percentage = distance / (Player.Size.X / 2);
-
-				float velocityMag = Ball.Velocity.Length;
-				var relativeVelocity = new Vector2(BALL_X_SPEED * percentage * 2, -Math.Abs(Ball.Velocity.Y));
-				Ball.Velocity = relativeVelocity.Normalized() * velocityMag;
-				Ball.Stuck = Ball.Sticky;
-				SoundEngine.Instance.PlaySound(ResourceManager.GetSound("bleepPaddle"));
-			}
+					float velocityMag = Ball.Velocity.Length;
+					var relativeVelocity = new Vector2(BALL_X_SPEED * percentage * 2, -Math.Abs(ball.Velocity.Y));
+					ball.Velocity = relativeVelocity.Normalized() * velocityMag;
+					ball.Stuck = ball.Sticky;
+					SoundEngine.Instance.PlaySound(ResourceManager.GetSound("bleepPaddle"));
+				}
+			});
 
 			foreach (PowerUp power in PowerUps)
 			{
@@ -463,15 +478,18 @@ namespace TP1
 			switch (power.Type)
 			{
 				case "speed":
-					Ball.Velocity *= 1.5f;
+					Balls.ForEach(ball => ball.Velocity *= 1.5f);
 					break;
 				case "sticky":
-					Ball.Sticky = true;
+					Balls.ForEach(ball => ball.Sticky = true);
 					Player.Color = Color.PaleGreen.ToVector3();
 					break;
 				case "comet":
-					Ball.Comet = true;
-					Ball.Color = Color.DarkRed.ToVector3();
+					Balls.ForEach(ball =>
+					{
+						ball.Comet = true;
+						ball.Color = Color.DarkRed.ToVector3();
+					});
 					break;
 				case "padIncrease":
 					Player.Size = new Vector2(Player.Size.X * 1.25f, Player.Size.Y);
@@ -486,24 +504,43 @@ namespace TP1
 					PostProcessor.Chaos = true;
 					break;
 				case "multiply":
+					SpawnBalls(Difficulty.AmountOfBalls);
 					break;
+			}
+		}
+
+		private void SpawnBalls(int amount)
+		{
+
+			for (int i = 0; i < amount; i++)
+			{
+				var ball = new BallObject(Ball.Position, Ball.Radius, Ball.Sprite, Color.Aqua.ToVector3(), new Vector2(Ball.Velocity.X + (float)Util.Random.NextDouble() * 2f, Ball.Velocity.Y))
+				{
+					Stuck = false
+				};
+				Balls.Add(ball);
 			}
 		}
 
 		private void SpawnPowerUps(GameObject brick)
 		{
 			var rand = Util.Random;
-			string[] types =
+			List<string> types = new List<string>()
 			{
-				"speed", "sticky", "comet", "padIncrease", "padDecrease", "confuse", "chaos", "multiply"
+				"speed", "sticky", "comet", "padIncrease", "padDecrease", "confuse", "chaos",
+				"speed", "sticky", "comet", "padIncrease", "padDecrease", "confuse", "chaos",
 			};
 			Dictionary<string, float> duration = new Dictionary<string, float>()
 			{
-				{"speed", 15},{"sticky", 10},{"comet", 7},{"padIncrease", 10},{"padDecrease", 5},{"confuse", 8},{"chaos", 3},{"multiply", 0.00001f},
+				{"speed", 15},{"sticky", 10},{"comet", 3},{"padIncrease", 10},{"padDecrease", 5},{"confuse", 8},{"chaos", 3},{ "multiply", 0.00001f}
 			};
+			if (Difficulty.Name != "hard")
+			{
+				types.Add("multiply");
+			}
 			if (rand.NextDouble() > Difficulty.PowerUpChance)
 			{
-				string type = types[rand.Next(0, types.Length)];
+				string type = types[rand.Next(0, types.Count)];
 				PowerUps.Add(new PowerUp(type, Color.DeepPink.ToVector3(), duration[type], brick.Position, ResourceManager.GetTex(type)));
 			}
 		}
@@ -522,15 +559,18 @@ namespace TP1
 						switch (PowerUps[i].Type)
 						{
 							case "speed":
-								Ball.Velocity /= 1.5f;
+								Balls.ForEach(ball => ball.Velocity /= 1.5f);
 								break;
 							case "sticky":
-								Ball.Sticky = PowerUps.Any(p => p.Active && p.Type == "sticky");
+								Balls.ForEach(ball => ball.Sticky = PowerUps.Any(p => p.Active && p.Type == "sticky"));
 								Player.Color = new Vector3(1);
 								break;
 							case "comet":
-								Ball.Comet = PowerUps.Any(p => p.Active && p.Type == "comet");
-								Ball.Color = new Vector3(1);
+								Balls.ForEach(ball => {
+									ball.Comet = PowerUps.Any(p => p.Active && p.Type == "comet");
+									ball.Color = Color.Aqua.ToVector3();
+									Ball.Color = Vector3.One;
+								});
 								break;
 							case "padIncrease":
 								Player.Size = new Vector2(Player.Size.X / 1.25f, Player.Size.Y);
@@ -543,8 +583,6 @@ namespace TP1
 								break;
 							case "chaos":
 								PostProcessor.Chaos = PowerUps.Any(p => p.Active && p.Type == "chaos");
-								break;
-							case "multiply":
 								break;
 						}
 					}
@@ -590,12 +628,15 @@ namespace TP1
 			text += '\n' + ("     Position: " + Player.Position);
 			text += '\n' + ("     Velocity: " + Player.Velocity);
 			text += '\n' + ("     Size: " + Player.Size);
-			text += '\n' + ("Ball");
-			text += '\n' + ("     Position: " + Ball.Position);
-			text += '\n' + ("     Velocity: " + Ball.Velocity);
-			text += '\n' + ("     Radius: " + Ball.Radius);
-			text += '\n' + ("     Comet: " + Ball.Comet);
-			text += '\n' + ("     Sticky: " + Ball.Sticky);
+			text += '\n' + ("Balls");
+			foreach (BallObject ball in Balls)
+			{
+				text += '\n' + ("     Position: " + ball.Position);
+				text += '\n' + ("     Velocity: " + ball.Velocity);
+				text += '\n' + ("     Radius: " + ball.Radius);
+				text += '\n' + ("     Comet: " + ball.Comet);
+				text += '\n' + ("     Sticky: " + ball.Sticky);
+			}
 			text += '\n' + ("PostProcessing");
 			text += '\n' + ("     Chaos: " + PostProcessor.Chaos);
 			text += '\n' + ("     Confuse: " + PostProcessor.Confuse);
