@@ -1,24 +1,40 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FreeTypeSharp" Version="1.1.3" />
     <PackageReference Include="Microsoft.Win32.SystemEvents" Version="4.7.0" />
+    <PackageReference Include="NAudio" Version="1.10.0" />
     <PackageReference Include="OpenTK" Version="3.2.0" />
+    <PackageReference Include="SharpFontStandard.Runtimes.WindowsOnly" Version="2.6.0" />
+    <PackageReference Include="SpaceWizards.SharpFont" Version="1.0.1" />
     <PackageReference Include="StbImageSharp" Version="2.22.4" />
     <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="levels\" />
+    <Folder Include="fonts\" />
     <Folder Include="resources\" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="resources\awesomeface.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="shaders\text.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="shaders\text.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="shaders\sprite.frag">
@@ -30,7 +46,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="XCOPY &quot;$(SolutionDir)TP1/resources&quot; &quot;$(TargetDir)resources&quot; /Y /S&#xD;&#xA;XCOPY &quot;$(SolutionDir)TP1/shaders&quot; &quot;$(TargetDir)shaders&quot; /Y /S&#xD;&#xA;echo d | XCOPY /D &quot;$(SolutionDir)TP1/levels&quot; &quot;$(TargetDir)levels&quot; /Y /S" />
+    <Exec Command="XCOPY &quot;$(SolutionDir)TP1/resources&quot; &quot;$(TargetDir)resources&quot; /Y /S&#xD;&#xA;XCOPY &quot;$(SolutionDir)TP1/shaders&quot; &quot;$(TargetDir)shaders&quot; /Y /S&#xD;&#xA;echo d | XCOPY /D &quot;$(SolutionDir)TP1/fonts&quot; &quot;$(TargetDir)fonts&quot; /Y /S&#xD;&#xA;echo d | XCOPY /D &quot;$(SolutionDir)TP1/levels&quot; &quot;$(TargetDir)levels&quot; /Y /S" />
   </Target>
 
 </Project>

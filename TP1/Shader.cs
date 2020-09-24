@@ -48,39 +48,67 @@ namespace TP1
 			GL.DeleteShader(sFragment);
 		}
 
-		public void SetFloat(string name, float value, bool useShader)
+		public void SetFloat(string name, float value, bool useShader = false)
 		{
 			if (useShader)
 				this.Use();
 			GL.Uniform1(GL.GetUniformLocation(ID, name), value);
 		}
 
-		public void SetInteger(string name, int value, bool useShader)
+		public void SetInteger(string name, int value, bool useShader = false)
 		{
 			if (useShader)
 				this.Use();
 			GL.Uniform1(GL.GetUniformLocation(ID, name), value);
 		}
 
-		public void SetVector2f(string name, float x, float y, bool useShader)
+		public void SetVector1iv(string name, int count, int[] value, bool useShader = false)
+		{
+			if (useShader)
+				this.Use();
+			GL.Uniform1(GL.GetUniformLocation(ID, name), count, value);
+		}
+
+		public void SetVector1fv(string name, int count, float[] value, bool useShader = false)
+		{
+			if (useShader)
+				this.Use();
+			GL.Uniform1(GL.GetUniformLocation(ID, name), count, value);
+		}
+
+		public void SetVector2f(string name, float x, float y, bool useShader = false)
 		{
 			if (useShader)
 				this.Use();
 			GL.Uniform2(GL.GetUniformLocation(ID, name), x, y);
 		}
 
-		public void SetVector3f(string name, Vector3 vector, bool useShader)
+		public void SetVector3f(string name, Vector3 vector, bool useShader = false)
 		{
 			if (useShader)
 				Use();
 			GL.Uniform3(GL.GetUniformLocation(ID, name), vector);
 		}
 
-		public void SetMatrix4(string name, Matrix4 matrix, bool useShader)
+		public void SetVector4f(string name, Vector4 vector, bool useShader = false)
+		{
+			if (useShader)
+				Use();
+			GL.Uniform4(GL.GetUniformLocation(ID, name), vector);
+		}
+
+		public void SetMatrix4(string name, Matrix4 matrix, bool useShader = false)
 		{
 			if (useShader)
 				Use();
 			GL.UniformMatrix4(GL.GetUniformLocation(ID, name), false, ref matrix);
+		}
+
+		public void SetVector2fv(string name, int count, ref float value, bool useShader = false)
+		{
+			if (useShader)
+				Use();
+			GL.Uniform2(GL.GetUniformLocation(ID, name), count, ref value);
 		}
 
 		private void CheckCompileErrors(int obj, string type)

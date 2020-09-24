@@ -9,7 +9,6 @@ namespace TP1
 	{
 		private readonly Shader Shader;
 		private int quadVAO;
-		private uint[] indices;
 
 		public Renderer2D(Shader shader)
 		{
@@ -17,12 +16,26 @@ namespace TP1
 			InitRenderdata();
 		}
 
+		public void DrawTexture(
+			Texture2D tex,
+			System.Numerics.Vector2 position,
+			System.Numerics.Vector2 size,
+			float rotation,
+			System.Numerics.Vector3 color)
+		{
+			DrawTexture(
+				tex,
+				new Vector2(position.X, position.Y),
+				new Vector2(size.X, size.Y),
+				rotation,
+				new Vector3(color.X, color.Y, color.Z));
+		}
+
 		public void DrawTexture(Texture2D tex, Vector2 position, Vector2 size, float rotation, Color color) => DrawTexture(tex, position, size, rotation, color.ToVector3());
 
 		public void DrawTexture(Texture2D tex, Vector2 position, Vector2 size, float rotation, Vector3 color)
 		{
-			Matrix4 model;
-			model = Matrix4.CreateScale(size.X, size.Y, 1f);
+			Matrix4 model = Matrix4.CreateScale(size.X, size.Y, 1f);
 			model *= Matrix4.CreateTranslation(-.5f * size.X, -.5f * size.Y, 0);
 			model *= Matrix4.CreateRotationZ((float)(Math.PI / 180) * rotation);
 			model *= Matrix4.CreateTranslation(.5f * size.X, .5f * size.Y, 0);
@@ -35,7 +48,6 @@ namespace TP1
 			GL.ActiveTexture(TextureUnit.Texture0);
 			tex.Bind();
 			GL.BindVertexArray(quadVAO);
-			//GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, indices);
 			GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 			GL.BindVertexArray(0);
 			GL.BindTexture(TextureTarget.Texture2D, 0);
@@ -43,7 +55,7 @@ namespace TP1
 
 		private void InitRenderdata()
 		{
-			int VBO, EBO;
+			int VBO;
 			float[] vertices = new float[] {
 				// pos      // tex
 				0.0f, 1.0f, 0.0f, 1.0f,
@@ -55,28 +67,11 @@ namespace TP1
 				1.0f, 0.0f, 1.0f, 0.0f
 			};
 
-			//float[] vertices = {
-			//	0.0f, 1.0f, 0.0f, 1.0f, // top left
-			//	1.0f, 0.0f, 1.0f, 0.0f, // bottom right
-			//	0.0f, 0.0f, 0.0f, 0.0f, // bottom left
-			//	1.0f, 1.0f, 1.0f, 1.0f	// top right
-			//};
-
-			//indices = new uint[]
-			//{
-			//	0, 1, 2,
-			//	0, 1, 3
-			//};
-
 			GL.GenVertexArrays(1, out quadVAO);
 			GL.GenBuffers(1, out VBO);
-			GL.GenBuffers(1, out EBO);
 
 			GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
 			GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * vertices.Length, vertices, BufferUsageHint.StaticDraw);
-
-			//GL.BindBuffer(BufferTarget.ArrayBuffer, EBO);
-			//GL.BufferData(BufferTarget.ArrayBuffer, sizeof(uint) * indices.Length, indices, BufferUsageHint.StaticDraw);
 
 			GL.BindVertexArray(quadVAO);
 			GL.EnableVertexAttribArray(0);

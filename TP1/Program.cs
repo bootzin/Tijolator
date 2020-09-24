@@ -8,8 +8,8 @@ namespace TP1
 
 		public static void Main()
 		{
-			using Game game = new Game(640, 480, "Jogo da bola e dos tijolo");
-			game.Run(60);
+			using Game game = new Game(680, 720, "Jogo da bola e dos tijolo");
+			game.Run(30);
 		}
 	}
 }

@@ -4,6 +4,7 @@
 	{
 		Active,
 		Paused,
+		Menu,
 		Win
 	}
 }

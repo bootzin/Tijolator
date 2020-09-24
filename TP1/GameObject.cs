@@ -26,5 +26,14 @@ namespace TP1
 		{
 			renderer.DrawTexture(Sprite, Position, Size, Rotation, Color);
 		}
+
+		public virtual Collision CheckCollision(GameObject other)
+		{
+			Collision col = new Collision();
+			bool collisionX = Position.X + Size.X >= other.Position.X && other.Position.X + other.Size.X >= Position.X;
+			bool collisionY = Position.Y + Size.Y >= other.Position.Y && other.Position.Y + other.Size.Y >= Position.Y;
+			col.Colliding = collisionX && collisionY;
+			return col;
+		}
 	}
 }

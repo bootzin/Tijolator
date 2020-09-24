@@ -10,12 +10,14 @@ namespace TP1
 	{
 		public List<GameObject> Bricks { get; set; } = new List<GameObject>();
 
-		public void Load(string filePath, int levelWidth, int levelHeight, int maxBricksPerRow)
+		public void Load(string filePath, int levelWidth, int levelHeight)
 		{
 			Bricks.Clear();
 			List<uint> tileData = new List<uint>();
 			using StreamReader sr = new StreamReader(Path.Combine(AppContext.BaseDirectory, filePath));
-			string lvl = sr.ReadToEnd();
+			string firstLine = sr.ReadLine();
+			int maxBricksPerRow = firstLine.Replace('\r', ' ').Replace('\n', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+			string lvl = firstLine + '\n' + sr.ReadToEnd();
 			foreach (var tile in lvl.Replace('\r',' ').Replace('\n', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries))
 			{
 				tileData.Add(uint.Parse(tile));
@@ -34,10 +36,7 @@ namespace TP1
 			}
 		}
 
-		public bool IsCompleted()
-		{
-			return false;
-		}
+		public bool IsCompleted() => Bricks.TrueForAll(b => (!b.IsSolid && b.Destroyed) || b.IsSolid);
 
 		private void Init(List<uint> tileData, int levelWidth, int levelHeight, int maxBricksPerRow)
 		{
@@ -58,7 +57,7 @@ namespace TP1
 							new Vector2(unitWidth, unitHeight),
 							ResourceManager.GetTex("block_solid"))
 						{
-							Color = Color.DarkGray.ToVector3(),
+							Color = Color.LightSalmon.ToVector3(),
 							IsSolid = true
 						};
 						Bricks.Add(obj);
@@ -67,10 +66,10 @@ namespace TP1
 					{
 						var color = (tileData[(y * width) + x]) switch
 						{
-							2 => new Vector3(.2f, .6f, 1f),
-							3 => new Vector3(0f, .7f, 0f),
-							4 => new Vector3(.8f, .8f, .4f),
-							5 => new Vector3(1f, .5f, 0f),
+							2 => Color.BlanchedAlmond.ToVector3(),//new Vector3(.2f, .6f, 1f),
+							3 => Color.Salmon.ToVector3(),//new Vector3(0f, .7f, 0f),
+							4 => Color.Pink.ToVector3(),//new Vector3(.8f, .8f, .4f),
+							5 => Color.HotPink.ToVector3(),//new Vector3(1f, .5f, 0f),
 							_ => Vector3.One,
 						};
 
