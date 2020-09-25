@@ -8,7 +8,7 @@ namespace TP1
 
 		public static void Main()
 		{
-			using Game game = new Game(680, 720, "TIJOLATOR!");
+			using Game game = new Game(612, 648, "TIJOLATOR!");
 			game.Run(30);
 		}
 	}

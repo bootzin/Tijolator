@@ -114,7 +114,7 @@ namespace TP1
 		private void CheckCompileErrors(int obj, string type)
 		{
 			int success;
-			if (type !="PROGRAM")
+			if (type != "PROGRAM")
 			{
 				GL.GetShader(obj, ShaderParameter.CompileStatus, out success);
 				if (success == 0)

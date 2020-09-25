@@ -1,8 +1,8 @@
 ﻿using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using SharpFont;
 using System;
 using System.Collections.Generic;
-using SharpFont;
 using System.IO;
 
 namespace TP1

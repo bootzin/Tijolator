@@ -57,7 +57,7 @@ namespace TP1
 				{ 0f,   -offset  },  // bottom-center
 				{ offset, -offset  }   // bottom-right    
 			};
-			PostProcessingShader.SetVector2fv("offsets", 9, ref offsets[0,0], true);
+			PostProcessingShader.SetVector2fv("offsets", 9, ref offsets[0, 0], true);
 
 			int[] edgeKernel = {
 				-1, -1, -1,

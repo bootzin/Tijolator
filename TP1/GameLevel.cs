@@ -20,7 +20,7 @@ namespace TP1
 			string firstLine = sr.ReadLine();
 			int maxBricksPerRow = firstLine.Replace('\r', ' ').Replace('\n', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
 			string lvl = firstLine + '\n' + sr.ReadToEnd();
-			foreach (var tile in lvl.Replace('\r',' ').Replace('\n', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries))
+			foreach (var tile in lvl.Replace('\r', ' ').Replace('\n', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries))
 			{
 				tileData.Add(uint.Parse(tile));
 			}
@@ -50,8 +50,8 @@ namespace TP1
 			int width = maxBricksPerRow;
 			int height = tileData.Count / maxBricksPerRow;
 
-			float unitWidth = (float) levelWidth / width;
-			float unitHeight = (float) levelHeight / height;
+			float unitWidth = (float)levelWidth / width;
+			float unitHeight = (float)levelHeight / height;
 
 			for (int y = 0; y < height; y++)
 			{

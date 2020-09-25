@@ -5,6 +5,7 @@
 		Active,
 		Paused,
 		Menu,
-		Win
+		Win,
+		Lost
 	}
 }

@@ -6,13 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 
 namespace TP1
 {
 	public class Game : GameWindow
 	{
 		public GameState State { get; private set; }
-		private bool shouldPause, showInfo;
+		private bool shouldPause, showInfo, drawInstruction;
 		private string[] lines = new string[] { };
 
 		public List<GameLevel> Levels { get; set; } = new List<GameLevel>();
@@ -29,7 +30,6 @@ namespace TP1
 		public BallObject Ball { get; set; }
 		private readonly float BALL_RADIUS = 12.5f;
 		private const float BALL_X_SPEED = 8;
-		private Vector2 BALL_VELOCITY = new Vector2(BALL_X_SPEED, -12f);
 
 		public ParticleGenerator ParticleGenerator { get; set; }
 		public PostProcessor PostProcessor { get; set; }
@@ -48,11 +48,44 @@ namespace TP1
 			GL.Enable(EnableCap.Blend);
 			GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-			Difficulties.Add(new Difficulty("easy", -12f, .65, 4, 2));
-			Difficulties.Add(new Difficulty("medium", -14f, .45, 3, 1));
-			Difficulties.Add(new Difficulty("hard", -16f, .15, 2, 0));
+			Difficulties.Add(new Difficulty("Facil", -12f, .65, 3, 3, 5)
+			{
+				PowerUpTypes = new List<string>()
+				{
+					"speed", "sticky", "comet", "padIncrease", "padDecrease", "multiply",
+					"speed", "sticky", "comet", "padIncrease", "padDecrease", "multiply",
+				},
+				PowerUpDuration = new Dictionary<string, float>()
+				{
+					{"speed", 8},{"sticky", 10},{"comet", 6},{"padIncrease", 12},{"padDecrease", 5},{"confuse", 8},{"chaos", 3},{ "multiply", 0.00001f}
+				}
+			});
+			Difficulties.Add(new Difficulty("Medio", -14f, .45, 3, 2, 3)
+			{
+				PowerUpTypes = new List<string>()
+				{
+					"speed", "sticky", "comet", "padIncrease", "padDecrease", "multiply", "chaos",
+					"speed", "sticky", "comet", "padIncrease", "padDecrease", "confuse",
+				},
+				PowerUpDuration = new Dictionary<string, float>()
+				{
+					{"speed", 10},{"sticky", 8},{"comet", 5},{"padIncrease", 10},{"padDecrease", 8},{"confuse", 6},{"chaos", 4},{ "multiply", 0.00001f}
+				}
+			});
+			Difficulties.Add(new Difficulty("Dificil", -16f, .25, 2, 0, 2)
+			{
+				PowerUpTypes = new List<string>()
+				{
+					"speed", "sticky", "comet", "padIncrease", "padDecrease", "chaos", "confuse",
+					"speed", "sticky", "comet", "padIncrease", "padDecrease", "chaos", "confuse",
+				},
+				PowerUpDuration = new Dictionary<string, float>()
+				{
+					{"speed", 12},{"sticky", 6},{"comet", 3},{"padIncrease", 10},{"padDecrease", 8},{"confuse", 8},{"chaos", 5},{ "multiply", 0f}
+				}
+			});
 
-			Difficulty = Difficulties[0];
+			Difficulty = Difficulties[1];
 
 			Init();
 		}
@@ -105,19 +138,24 @@ namespace TP1
 			three.Load("levels/three.lvl", Width, Height / 2);
 			GameLevel four = new GameLevel();
 			four.Load("levels/four.lvl", Width, Height / 2);
+			GameLevel five = new GameLevel();
+			five.Load("levels/five.lvl", Width, Height / 2);
+			GameLevel six = new GameLevel();
+			six.Load("levels/six.lvl", Width, Height / 2);
 			Levels.Add(one);
 			Levels.Add(two);
 			Levels.Add(three);
 			Levels.Add(four);
-			Level = 2;
+			Levels.Add(five);
+			Levels.Add(six);
+			Level = 4;
 
 			const float offset = 84f;
 			Vector2 playerStartPos = new Vector2((Width / 2) - (PLAYER_SIZE.X / 2), Height - PLAYER_SIZE.Y - offset);
 			Player = new GameObject(playerStartPos, PLAYER_SIZE, ResourceManager.GetTex("paddle"));
 
 			Vector2 ballStartPos = playerStartPos + new Vector2((Player.Size.X / 2f) - BALL_RADIUS, -BALL_RADIUS * 2f);
-			BALL_VELOCITY = new Vector2(GetRandomBallSpeed(), Difficulty.BallUpSpeed);
-			Ball = new BallObject(ballStartPos, BALL_RADIUS, ResourceManager.GetTex("ball"), Color.Pink.ToVector3(), velocity: BALL_VELOCITY);
+			Ball = new BallObject(ballStartPos, BALL_RADIUS, ResourceManager.GetTex("ball"), Color.Pink.ToVector3(), velocity: new Vector2(GetRandomBallSpeed(), Difficulty.BallUpSpeed));
 			Balls.Add(Ball);
 
 			ParticleGenerator = new ParticleGenerator(ResourceManager.GetShader("particle"), ResourceManager.GetTex("particle"), 500);
@@ -149,16 +187,18 @@ namespace TP1
 					Lives--;
 					if (Lives == 0)
 					{
-						Reset();
+						State = GameState.Lost;
+						PostProcessor.Confuse = true;
 						return;
 					}
 					Balls.Add(Ball);
 					ResetPlayer();
-				} 
+				}
 				else
 				{
 					Ball = Balls[0];
-					Ball.Color = new Vector3(1);
+					if (!Ball.Comet)
+						Ball.Color = new Vector3(1);
 				}
 
 				float x = Math.Max(Math.Min((float)(Player.Position.X + (PLAYER_VELOCITY * e.Time)), Width - Player.Size.X), 0);
@@ -218,6 +258,10 @@ namespace TP1
 			{
 				TextRenderer.RenderText($"Vidas: {Lives}", 5, 5, 1);
 				TextRenderer.RenderText("Efeitos:", 15, Height - 75, .95f);
+				if (drawInstruction)
+				{
+					TextRenderer.RenderText("Pressione espaco", (Width / 2) - 120f, (Height / 2) + 80f, 1);
+				}
 				for (int i = 0; i < PowerUps.Count; i++)
 				{
 					if (PowerUps[i].Active)
@@ -229,10 +273,12 @@ namespace TP1
 				TextRenderer.RenderText("Pressione ENTER para iniciar", (Width / 2f) - 200, (Height / 2f) + 20f, 1);
 				TextRenderer.RenderText("Pressione W ou S para selecionar a fase", (Width / 2f) - 225f, (Height / 2f) + 50f, .8f);
 				TextRenderer.RenderText("Pressione I para INFO", (Width / 2f) - 95f, (Height / 2f) + 80f, .6f);
+				TextRenderer.RenderText($"Dificuldade: {Difficulty.Name}", (Width / 2) - 110, Height * .7f, .8f);
+
 				if (showInfo)
 				{
 					Renderer.DrawTexture(Overlay, Vector2.Zero, new Vector2(Width, Height), 0, Color.DarkSlateGray.ToVector4(.8f));
-					TextRenderer.RenderText("INFO", Width / 2 - 75, 16, 2);
+					TextRenderer.RenderText("INFO", (Width / 2) - 75, 16, 2);
 					TextRenderer.RenderText("Bem vindo ao TIJOLATOR!", 15, 16 * 5, .8f);
 					TextRenderer.RenderText("Para mudar a dificuldade, pressione [1], [2] ou [3]", 15, 16 * 7.5f, .8f);
 					TextRenderer.RenderText("O mouse movimenta a barra de acordo com sua posicao", 15, 16 * 9.5f, .8f);
@@ -244,12 +290,17 @@ namespace TP1
 					TextRenderer.RenderText("Quando a bola grudar na barra,", 15, 16 * 20.5f, .8f);
 					TextRenderer.RenderText("aperte espaco para solta-la", 15, 16 * 22, .8f);
 					TextRenderer.RenderText("Por fim:", 15, 16 * 25, .8f);
-					TextRenderer.RenderText("LET'S TIJOLATE!", Width / 2 - 170, 16 * 32, 1.5f);
+					TextRenderer.RenderText("LET'S TIJOLATE!", (Width / 2) - 170, 16 * 32, 1.5f);
 				}
 			}
 			if (State == GameState.Win)
 			{
 				TextRenderer.RenderText("Venceste!!!", (Width / 2f) - 75f, (Height / 2f) + 280f, 1f, new Vector3(0f, 1f, 0f));
+			}
+			if (State == GameState.Lost)
+			{
+				TextRenderer.RenderText("Perdeste! :(", (Width / 2f) - 75f, (Height / 2f) - 100f, 1f, new Vector3(1f, 0f, 0f));
+				TextRenderer.RenderText("Pressione R para voltar ao menu", (Width / 2f) - 225f, (Height / 2f) - 70f, 1f, Vector3.Zero);
 			}
 			if (State == GameState.Active && Levels[Level].IsCompleted())
 			{
@@ -267,7 +318,7 @@ namespace TP1
 			if (State == GameState.Paused)
 			{
 				Renderer.DrawTexture(Overlay, Vector2.Zero, new Vector2(Width, Height), 0, Color.DarkSlateGray.ToVector4(.4f));
-				TextRenderer.RenderText("PAUSE", Width / 2f - 75, Height / 2f, 2);
+				TextRenderer.RenderText("PAUSE", (Width / 2f) - 75, Height / 2f, 2);
 				for (int line = 0; line < lines.Length; line++)
 				{
 					var height = line * TextRenderer.Characters['T'].Size.Y;
@@ -298,6 +349,7 @@ namespace TP1
 			}
 			if (State == GameState.Active && e.Key == Key.Space)
 			{
+				drawInstruction = false;
 				Balls.ForEach(ball => ball.Stuck = false);
 			}
 			if (State == GameState.Menu)
@@ -307,7 +359,7 @@ namespace TP1
 					if (showInfo)
 						showInfo = false;
 					else
-						Level = (Level + 1) % 4;
+						Level = (Level + 1) % Levels.Count;
 				}
 				if (e.Key == Key.S)
 				{
@@ -316,11 +368,13 @@ namespace TP1
 					else
 						if (Level > 0)
 							Level--;
-						else
-							Level = 3;
+					else
+						Level = Levels.Count - 1;
 				}
 				if (e.Key == Key.Enter)
 				{
+					drawInstruction = true;
+					Ball.Velocity = new Vector2(Ball.Velocity.X, Difficulty.BallUpSpeed);
 					if (showInfo)
 						showInfo = false;
 					else
@@ -336,6 +390,11 @@ namespace TP1
 				Levels[Level].Reload(Width, Height / 2);
 				PostProcessor.Chaos = true;
 				State = GameState.Win;
+			}
+			if (e.Key == Key.K)
+			{
+				PostProcessor.Confuse = true;
+				State = GameState.Lost;
 			}
 			if (e.Key == Key.Number1)
 			{
@@ -362,7 +421,9 @@ namespace TP1
 			if (e.Button == MouseButton.Left)
 			{
 				if (State == GameState.Active)
+				{
 					State = GameState.Paused;
+				}
 				else if (State == GameState.Paused)
 				{
 					State = GameState.Active;
@@ -511,10 +572,9 @@ namespace TP1
 
 		private void SpawnBalls(int amount)
 		{
-
 			for (int i = 0; i < amount; i++)
 			{
-				var ball = new BallObject(Ball.Position, Ball.Radius, Ball.Sprite, Color.Aqua.ToVector3(), new Vector2(Ball.Velocity.X + (float)Util.Random.NextDouble() * 2f, Ball.Velocity.Y))
+				var ball = new BallObject(Ball.Position, Ball.Radius, Ball.Sprite, Color.Aqua.ToVector3(), new Vector2(Ball.Velocity.X + ((float)Util.Random.NextDouble() * 2f), Ball.Velocity.Y))
 				{
 					Stuck = false
 				};
@@ -524,23 +584,11 @@ namespace TP1
 
 		private void SpawnPowerUps(GameObject brick)
 		{
-			var rand = Util.Random;
-			List<string> types = new List<string>()
+			if (Util.Random.NextDouble() > Difficulty.PowerUpChance)
 			{
-				"speed", "sticky", "comet", "padIncrease", "padDecrease", "confuse", "chaos",
-				"speed", "sticky", "comet", "padIncrease", "padDecrease", "confuse", "chaos",
-			};
-			Dictionary<string, float> duration = new Dictionary<string, float>()
-			{
-				{"speed", 15},{"sticky", 10},{"comet", 3},{"padIncrease", 10},{"padDecrease", 5},{"confuse", 8},{"chaos", 3},{ "multiply", 0.00001f}
-			};
-			if (Difficulty.Name != "hard")
-			{
-				types.Add("multiply");
-			}
-			if (rand.NextDouble() > Difficulty.PowerUpChance)
-			{
-				string type = types[rand.Next(0, types.Count)];
+				List<string> types = Difficulty.PowerUpTypes;
+				Dictionary<string, float> duration = Difficulty.PowerUpDuration;
+				string type = types[Util.Random.Next(0, types.Count)];
 				PowerUps.Add(new PowerUp(type, Color.DeepPink.ToVector3(), duration[type], brick.Position, ResourceManager.GetTex(type)));
 			}
 		}
@@ -562,15 +610,18 @@ namespace TP1
 								Balls.ForEach(ball => ball.Velocity /= 1.5f);
 								break;
 							case "sticky":
-								Balls.ForEach(ball => ball.Sticky = PowerUps.Any(p => p.Active && p.Type == "sticky"));
-								Player.Color = new Vector3(1);
+								bool isAnySticky = PowerUps.Any(p => p.Active && p.Type == "sticky");
+								Balls.ForEach(ball => ball.Sticky = isAnySticky);
+								if (!isAnySticky)
+									Player.Color = new Vector3(1);
 								break;
 							case "comet":
-								Balls.ForEach(ball => {
+								Balls.ForEach(ball =>
+								{
 									ball.Comet = PowerUps.Any(p => p.Active && p.Type == "comet");
 									ball.Color = Color.Aqua.ToVector3();
-									Ball.Color = Vector3.One;
 								});
+								Ball.Color = Vector3.One;
 								break;
 							case "padIncrease":
 								Player.Size = new Vector2(Player.Size.X / 1.25f, Player.Size.Y);
@@ -603,63 +654,68 @@ namespace TP1
 			Lives = 3;
 			PostProcessor.Chaos = false;
 			PostProcessor.Confuse = false;
+			Balls.Clear();
 			Init();
 		}
 
 		private void ResetPlayer()
 		{
 			UpdatePowerUps(100000);
+			PostProcessor.Chaos = false;
+			PostProcessor.Confuse = false;
 			PowerUps.Clear();
 			Player.Position = new Vector2((Width / 2) - (PLAYER_SIZE.X / 2), Height - PLAYER_SIZE.Y - 84f);
 			Player.Size = PLAYER_SIZE;
 			Player.Color = new Vector3(1);
-			BALL_VELOCITY = new Vector2(GetRandomBallSpeed(), Difficulty.BallUpSpeed);
-			Ball.Reset(Player.Position + new Vector2((Player.Size.X / 2) - BALL_RADIUS, -BALL_RADIUS * 2f), BALL_VELOCITY);
+			Ball.Reset(Player.Position + new Vector2((Player.Size.X / 2) - BALL_RADIUS, -BALL_RADIUS * 2f), new Vector2(GetRandomBallSpeed(), Difficulty.BallUpSpeed));
 			Ball.Size = new Vector2(2f * BALL_RADIUS);
 		}
 
 		private void LogInfo()
 		{
-			string text = ("======================================");
-			text += '\n' + ("DEBUG INFORMATION");
-			text += '\n' + ("Difficulty");
-			text += '\n' + ("     Name: " + Difficulty.Name);
-			text += '\n' + ("Paddle");
-			text += '\n' + ("     Position: " + Player.Position);
-			text += '\n' + ("     Velocity: " + Player.Velocity);
-			text += '\n' + ("     Size: " + Player.Size);
-			text += '\n' + ("Balls");
+			StringBuilder sb = new StringBuilder();
+
+			sb.Append("======================================");
+			sb.Append('\n').Append("DEBUG INFORMATION");
+			sb.Append('\n').Append("Difficulty");
+			sb.Append('\n').Append("     Name: ").Append(Difficulty.Name);
+			sb.Append('\n').Append("Paddle");
+			sb.Append('\n').Append("     Position: ").Append(Player.Position);
+			sb.Append('\n').Append("     Velocity: ").Append(Player.Velocity);
+			sb.Append('\n').Append("     Size: ").Append(Player.Size);
+			sb.Append('\n').Append("Balls");
 			foreach (BallObject ball in Balls)
 			{
-				text += '\n' + ("     Position: " + ball.Position);
-				text += '\n' + ("     Velocity: " + ball.Velocity);
-				text += '\n' + ("     Radius: " + ball.Radius);
-				text += '\n' + ("     Comet: " + ball.Comet);
-				text += '\n' + ("     Sticky: " + ball.Sticky);
+				sb.Append('\n').Append("     Position: ").Append(ball.Position);
+				sb.Append('\n').Append("     Velocity: ").Append(ball.Velocity);
+				sb.Append('\n').Append("     Radius: ").Append(ball.Radius);
+				sb.Append('\n').Append("     Comet: ").Append(ball.Comet);
+				sb.Append('\n').Append("     Sticky: ").Append(ball.Sticky);
 			}
-			text += '\n' + ("PostProcessing");
-			text += '\n' + ("     Chaos: " + PostProcessor.Chaos);
-			text += '\n' + ("     Confuse: " + PostProcessor.Confuse);
-			text += '\n' + ("     Shake: " + PostProcessor.Shake);
-			text += '\n' + ("PowerUps");
+			sb.Append('\n').Append("PostProcessing");
+			sb.Append('\n').Append("     Chaos: ").Append(PostProcessor.Chaos);
+			sb.Append('\n').Append("     Confuse: ").Append(PostProcessor.Confuse);
+			sb.Append('\n').Append("     Shake: ").Append(PostProcessor.Shake);
+			sb.Append('\n').Append("PowerUps");
 			foreach (var p in PowerUps)
 			{
-				text += '\n' + ("     Type: " + p.Type);
-				text += '\n' + ("         Active: " + p.Active);
-				text += '\n' + ("         Duration: " + p.Duration);
+				sb.Append('\n').Append("     Type: ").Append(p.Type);
+				sb.Append('\n').Append("         Active: ").Append(p.Active);
+				sb.Append('\n').Append("         Duration: ").Append(p.Duration);
 			}
-			text += '\n' + ("Bricks");
+			sb.Append('\n').Append("Bricks");
 			for (int i = 0; i < Levels[Level].Bricks.Count; i++)
 			{
 				var brick = Levels[Level].Bricks[i];
 				if (!brick.Destroyed)
 				{
-					text += '\n' + ("     Brick" + i);
-					text += '\n' + ("         Position" + brick.Position);
-					text += '\n' + ("         IsSolid" + brick.IsSolid);
+					sb.Append('\n').Append("     Brick").Append(i);
+					sb.Append('\n').Append("         Position").Append(brick.Position);
+					sb.Append('\n').Append("         IsSolid").Append(brick.IsSolid);
 				}
 			}
-			text += '\n' + ("======================================");
+			sb.Append('\n').Append("======================================");
+			string text = sb.ToString();
 			Console.WriteLine(text);
 
 			lines = text.Split('\n');

@@ -57,7 +57,6 @@ namespace TP1
 
 		private void InitRenderdata()
 		{
-			int VBO;
 			float[] vertices = new float[] {
 				// pos      // tex
 				0.0f, 1.0f, 0.0f, 1.0f,
@@ -70,7 +69,7 @@ namespace TP1
 			};
 
 			GL.GenVertexArrays(1, out quadVAO);
-			GL.GenBuffers(1, out VBO);
+			int VBO = GL.GenBuffer();
 
 			GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
 			GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * vertices.Length, vertices, BufferUsageHint.StaticDraw);
