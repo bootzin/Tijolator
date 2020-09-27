@@ -179,8 +179,4 @@
     </None>
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="XCOPY &quot;$(SolutionDir)TP1/resources&quot; &quot;$(TargetDir)resources&quot; /Y /S&#xD;&#xA;XCOPY &quot;$(SolutionDir)TP1/shaders&quot; &quot;$(TargetDir)shaders&quot; /Y /S&#xD;&#xA;echo d | XCOPY /D &quot;$(SolutionDir)TP1/fonts&quot; &quot;$(TargetDir)fonts&quot; /Y /S&#xD;&#xA;echo d | XCOPY /D &quot;$(SolutionDir)TP1/levels&quot; &quot;$(TargetDir)levels&quot; /Y /S" />
-  </Target>
-
 </Project>

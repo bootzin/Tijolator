@@ -167,9 +167,6 @@ namespace TP1
 			Vector2 playerStartPos = new Vector2((Width / 2) - (PLAYER_SIZE.X / 2), Height - PLAYER_SIZE.Y - offset);
 			Player = new GameObject(playerStartPos, PLAYER_SIZE, ResourceManager.GetTex("paddle"));
 
-			// quantidade de vidas de acordo com a dificuldade
-			Lives = Difficulty.LifeAmount;
-
 			// instanciar bola
 			Vector2 ballStartPos = playerStartPos + new Vector2((Player.Size.X / 2f) - BALL_RADIUS, -BALL_RADIUS * 2f);
 			Ball = new BallObject(ballStartPos, BALL_RADIUS, ResourceManager.GetTex("ball"), Color.Pink.ToVector3(), velocity: new Vector2(GetRandomBallSpeed(), Difficulty.BallUpSpeed));
@@ -214,6 +211,7 @@ namespace TP1
 					if (Lives == 0)
 					{
 						State = GameState.Lost;
+						PostProcessor.Chaos = false;
 						PostProcessor.Confuse = true;
 						return;
 					}
@@ -361,6 +359,7 @@ namespace TP1
 			if (State == GameState.Active && Levels[Level].IsCompleted())
 			{
 				Levels[Level].Reload(Width, Height / 2);
+				PostProcessor.Confuse = false;
 				PostProcessor.Chaos = true;
 				State = GameState.Win;
 			}
@@ -438,6 +437,9 @@ namespace TP1
 				// começar o jogo com a fase ativa
 				if (e.Key == Key.Enter)
 				{
+					// quantidade de vidas de acordo com a dificuldade
+					Lives = Difficulty.LifeAmount;
+
 					drawInstruction = true;
 					Ball.Velocity = new Vector2(Ball.Velocity.X, Difficulty.BallUpSpeed);
 					if (showInfo)
@@ -455,12 +457,14 @@ namespace TP1
 			if (e.Key == Key.L)
 			{
 				Levels[Level].Reload(Width, Height / 2);
+				PostProcessor.Confuse = false;
 				PostProcessor.Chaos = true;
 				State = GameState.Win;
 			}
 			// 'cheat' para pular para a tela de derrota
 			if (e.Key == Key.K)
 			{
+				PostProcessor.Chaos = false;
 				PostProcessor.Confuse = true;
 				State = GameState.Lost;
 			}
