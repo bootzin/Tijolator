@@ -11,6 +11,7 @@ namespace TP1
 		private string FilePath;
 		public List<GameObject> Bricks { get; set; } = new List<GameObject>();
 
+		// ler os dados do arquivo de nível e transformá-lo em objetos do jogo
 		public void Load(string filePath, int levelWidth, int levelHeight)
 		{
 			Bricks.Clear();
@@ -29,6 +30,7 @@ namespace TP1
 				Init(tileData, levelWidth, levelHeight, maxBricksPerRow);
 		}
 
+		// desenhar os blocos do jogo
 		public void Draw(Renderer2D renderer)
 		{
 			foreach (var tile in Bricks)
@@ -38,13 +40,23 @@ namespace TP1
 			}
 		}
 
+		// retornar os tijolos à posição original
 		public void Reload(int width, int height)
 		{
 			Load(FilePath, width, height);
 		}
 
+		// obter score atual
+		public int GetScore()
+		{
+			return Bricks.FindAll(b => b.Destroyed).Count;
+		}
+
 		public bool IsCompleted() => Bricks.TrueForAll(b => (!b.IsSolid && b.Destroyed) || b.IsSolid);
 
+		// transformar os dados lidos do arquivo em objetos do jogo
+		// a altura e largura dos blocos é ajustada automaticamente 
+		// de acordo com a quantidade de blocos na fase
 		private void Init(List<uint> tileData, int levelWidth, int levelHeight, int maxBricksPerRow)
 		{
 			int width = maxBricksPerRow;
@@ -73,10 +85,10 @@ namespace TP1
 					{
 						var color = (tileData[(y * width) + x]) switch
 						{
-							2 => Color.BlanchedAlmond.ToVector3(),//new Vector3(.2f, .6f, 1f),
-							3 => Color.Salmon.ToVector3(),//new Vector3(0f, .7f, 0f),
-							4 => Color.Pink.ToVector3(),//new Vector3(.8f, .8f, .4f),
-							5 => Color.HotPink.ToVector3(),//new Vector3(1f, .5f, 0f),
+							2 => Color.BlanchedAlmond.ToVector3(),
+							3 => Color.Salmon.ToVector3(),
+							4 => Color.Pink.ToVector3(),
+							5 => Color.HotPink.ToVector3(),
 							_ => Vector3.One,
 						};
 

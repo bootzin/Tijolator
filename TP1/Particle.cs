@@ -2,6 +2,7 @@
 
 namespace TP1
 {
+	// struct para armazenar dados de partículas
 	public struct Particle
 	{
 		public Vector2 Position { get; set; }

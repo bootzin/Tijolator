@@ -2,6 +2,7 @@
 
 namespace TP1
 {
+	// classe para armazenar os dados de powerups
 	public class PowerUp : GameObject
 	{
 		public string Type { get; set; }

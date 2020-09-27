@@ -10,6 +10,8 @@ using System.Runtime.InteropServices;
 
 namespace TP1
 {
+	// classe responsável por gerenciar os recursos do jogo, guardando esses dados em memória 
+	// para serem acessados pelas demais classes. Esses dados incluem sons, texturas e shaders
 	public static class ResourceManager
 	{
 		public static Dictionary<string, Shader> Shaders { get; set; } = new Dictionary<string, Shader>();

@@ -23,14 +23,18 @@ namespace TP1
 			Init();
 		}
 
+		// atualizar e refrescar as partículas, removendo as mais antigas e gerando novas
+		// em posições aleatórias próximas do objeto original
 		public void Update(float dt, GameObject obj, int newParticles, Vector2 offset)
 		{
+			// substituir as partículas antigas
 			for (int i = 0; i < newParticles; i++)
 			{
 				int unusedParticle = FirstUnusedParticle();
 				Particles[unusedParticle] = RespawnParticle(Particles[unusedParticle], obj, offset);
 			}
 
+			// atualizar posição, tempo de vida e alpha das partículas
 			for (int i = 0; i < Amount; i++)
 			{
 				Particle p = Particles[i];
@@ -44,8 +48,11 @@ namespace TP1
 			}
 		}
 
+		// desenhar cada uma das partículas utilizando shaders apropriados
 		public void Draw()
 		{
+			// alterando a função de blend para gerar um efeito de "brilho" quando
+			// múltiplas partículas se acumulam no mesmo lugar
 			GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
 			Shader.Use();
 			foreach (Particle particle in Particles)
@@ -60,12 +67,14 @@ namespace TP1
 					GL.BindVertexArray(0);
 				}
 			}
+			// retornando para a função de blend original
 			GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 		}
 
+		// inicializar os arrays e buffers das partículas
 		private void Init()
 		{
-			float[] particle_quad = {
+			float[] particleQuad = {
 				0.0f, 1.0f, 0.0f, 1.0f,
 				1.0f, 0.0f, 1.0f, 0.0f,
 				0.0f, 0.0f, 0.0f, 0.0f,
@@ -79,7 +88,7 @@ namespace TP1
 			int VBO = GL.GenBuffer();
 
 			GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
-			GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * particle_quad.Length, particle_quad, BufferUsageHint.StaticDraw);
+			GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * particleQuad.Length, particleQuad, BufferUsageHint.StaticDraw);
 
 			GL.BindVertexArray(VAO);
 			GL.EnableVertexAttribArray(0);
@@ -93,6 +102,9 @@ namespace TP1
 			}
 		}
 
+		// otimizar a função que obtém as partículas que serão removidas,
+		// uma vez que é provável que as partículas estejam ordenadas por
+		// tempo restante de vida
 		private int FirstUnusedParticle()
 		{
 			for (int i = lastUsedParticle; i < Amount; i++)
@@ -116,6 +128,8 @@ namespace TP1
 			return lastUsedParticle = 0;
 		}
 
+		// instanciar novas partículas com posições levemente aleatorizadas com base
+		// na posição do objeto original
 		private Particle RespawnParticle(Particle particle, GameObject obj, Vector2 offset)
 		{
 			var rand = Util.Random;

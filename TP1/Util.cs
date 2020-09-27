@@ -4,6 +4,7 @@ using System.Drawing;
 
 namespace TP1
 {
+	// classe contendo métodos auxiliares para suporte às demais classes
 	public static class Util
 	{
 		public static Random Random { get; } = new Random();

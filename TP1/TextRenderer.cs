@@ -15,6 +15,7 @@ namespace TP1
 		private readonly int VAO;
 		private readonly int VBO;
 
+		// inicializar os shaders de texto e as variáveis correspondentes do OpenGL
 		public TextRenderer(int width, int height)
 		{
 			TextShader = ResourceManager.LoadShader("shaders/text.vert", "shaders/text.frag", "text");
@@ -33,11 +34,13 @@ namespace TP1
 			GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 		}
 
-		public void Load(string font, uint fontSize)
+		// carregar o arquivo da fonte como um objeto e atribuí-los 
+		// a uma textura do openGL para cada caractér
+		public void Load(string fontPath, uint fontSize)
 		{
 			Characters.Clear();
 			Library ft = new Library();
-			Face face = ft.NewFace(Path.Combine(AppContext.BaseDirectory, font), 0);
+			Face face = ft.NewFace(Path.Combine(AppContext.BaseDirectory, fontPath), 0);
 			face.SetPixelSizes(0, fontSize);
 			GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
 			for (byte c = 0; c < 128; c++)
@@ -76,6 +79,9 @@ namespace TP1
 
 		public void RenderText(string text, float x, float y, float scale) => RenderText(text, x, y, scale, Vector3.One);
 
+		// desenhar cada caracter do texto utilizando a fonte carregada anteriormente
+		// x e y denotam a posição inicial do texto, e o tamanho da fonte é utilizado
+		// para determinar a posição do próximo caractér
 		public void RenderText(string text, float x, float y, float scale, Vector3 color)
 		{
 			TextShader.Use();
@@ -114,6 +120,7 @@ namespace TP1
 			GL.BindTexture(TextureTarget.Texture2D, 0);
 		}
 
+		// classe para armazenar os dados da fonte
 		public class Character
 		{
 			public int TextureID { get; set; }

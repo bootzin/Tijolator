@@ -2,6 +2,7 @@
 
 namespace TP1
 {
+	// classe para armazenar os dados da dificuldade atual do jogo
 	public class Difficulty
 	{
 		public string Name { get; set; }

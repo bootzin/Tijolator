@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace TP1
 {
+	// classe para gerenciar a reprodução de sons
 	public sealed class SoundEngine : IDisposable
 	{
 		private readonly IWavePlayer outputDevice;

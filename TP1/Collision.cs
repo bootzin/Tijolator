@@ -2,6 +2,7 @@
 
 namespace TP1
 {
+	// classe para armazenar os dados de colisão
 	public class Collision
 	{
 		public bool Colliding { get; set; }

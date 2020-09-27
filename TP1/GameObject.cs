@@ -22,11 +22,13 @@ namespace TP1
 			Velocity = velocity ?? Vector2.Zero;
 		}
 
+		// desenhar o objeto utilizando a classe de renderização
 		public void Draw(Renderer2D renderer)
 		{
 			renderer.DrawTexture(Sprite, Position, Size, Rotation, Color);
 		}
 
+		// método padrão para checagem de colisão
 		public virtual Collision CheckCollision(GameObject other)
 		{
 			Collision col = new Collision();

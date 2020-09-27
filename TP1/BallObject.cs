@@ -14,6 +14,7 @@ namespace TP1
 			Radius = radius;
 		}
 
+		// redefinir os atributos da bola
 		public void Reset(Vector2 position, Vector2 velocity)
 		{
 			Position = position;
@@ -24,6 +25,8 @@ namespace TP1
 			Stuck = true;
 		}
 
+		// movimentar a bola, refletindo em caso de colisão
+		// com as bordas laterais ou superior
 		public Vector2 Move(float dt, int windowWidth)
 		{
 			if (!Stuck)
@@ -51,6 +54,11 @@ namespace TP1
 			return Position;
 		}
 
+		// método para checar a colisão, sobrescrevendo o
+		// método padrão da classe de objeto.
+		// esse método pega o ponto de colisão mais próximo de um retângulo com a bola
+		// e utiliza ele para determinar se a colisão ocorre. Adicionalmente,
+		// esse ponto é utilizado para determinar a direção de reflexão da bola
 		public override Collision CheckCollision(GameObject other)
 		{
 			Collision col = new Collision();

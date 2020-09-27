@@ -4,6 +4,7 @@ using System;
 
 namespace TP1
 {
+	// classe responsável pelo gerenciamento de shaders
 	public class Shader : IDisposable
 	{
 		public int ID { get; set; }
@@ -15,12 +16,14 @@ namespace TP1
 			Compile(vShader, fShader);
 		}
 
+		// define esse shader como o shader ativo no OpenGL
 		public Shader Use()
 		{
 			GL.UseProgram(ID);
 			return this;
 		}
 
+		// compilação do código do shader para um programa do openGL
 		public void Compile(string vShader, string fShader)
 		{
 			int sVertex, sFragment;
@@ -37,17 +40,21 @@ namespace TP1
 			GL.CompileShader(sFragment);
 			CheckCompileErrors(sFragment, "FRAGMENT");
 
+			//Program
 			this.ID = GL.CreateProgram();
 			GL.AttachShader(ID, sVertex);
 			GL.AttachShader(ID, sFragment);
 			GL.LinkProgram(ID);
 			CheckCompileErrors(ID, "PROGRAM");
+
+			// depois de compilar, podemos liberar os recursos
 			GL.DetachShader(ID, sVertex);
 			GL.DetachShader(ID, sFragment);
 			GL.DeleteShader(sVertex);
 			GL.DeleteShader(sFragment);
 		}
 
+		// diversos métodos para o envio de informações ao programa do OpenGL
 		public void SetFloat(string name, float value, bool useShader = false)
 		{
 			if (useShader)

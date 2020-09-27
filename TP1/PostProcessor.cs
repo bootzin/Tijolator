@@ -24,10 +24,12 @@ namespace TP1
 			Width = width;
 			Height = height;
 
+			// gerar framebuffers e renderbuffer
 			MSFBO = GL.GenFramebuffer();
 			FBO = GL.GenFramebuffer();
 			int RBO = GL.GenRenderbuffer();
 
+			// criar framebuffer de múltiplas amostras utilizando o renderbuffer apropriado
 			GL.BindFramebuffer(FramebufferTarget.Framebuffer, MSFBO);
 			GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, RBO);
 			GL.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, GL.GetInteger(GetPName.MaxSamples), RenderbufferStorage.Rgb8, width, height);
@@ -35,6 +37,7 @@ namespace TP1
 			if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete)
 				Console.WriteLine("ERROR::POSTPROCESSOR: Failed to initialize MSFBO!");
 
+			// Atribuir textura ao framebuffer
 			GL.BindFramebuffer(FramebufferTarget.Framebuffer, FBO);
 			Texture.Generate(Width, Height, IntPtr.Zero);
 			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, Texture.ID, 0);
@@ -44,8 +47,10 @@ namespace TP1
 
 			InitRenderData();
 
+			// inicalizar shaders de pixel, utilizando um amostrador 2D
 			PostProcessingShader.SetInteger("scene", 0, true);
 			const float offset = 1f / 300f;
+			// matriz de offsets para o efeito shake/chaos
 			float[,] offsets = {
 				{ -offset,  offset  },  // top-left
 				{ 0f,    offset  },  // top-center
@@ -59,6 +64,7 @@ namespace TP1
 			};
 			PostProcessingShader.SetVector2fv("offsets", 9, ref offsets[0, 0], true);
 
+			// kernel de convolução para efeito de chaos
 			int[] edgeKernel = {
 				-1, -1, -1,
 				-1,  8, -1,
@@ -66,6 +72,7 @@ namespace TP1
 			};
 			PostProcessingShader.SetVector1iv("edge_kernel", 9, edgeKernel, true);
 
+			// kernel de convolução para efeito de blur (utilizado no shake)
 			float[] blurKernel = {
 				1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f,
 				2.0f / 16.0f, 4.0f / 16.0f, 2.0f / 16.0f,
@@ -74,6 +81,7 @@ namespace TP1
 			PostProcessingShader.SetVector1fv("blur_kernel", 9, blurKernel, true);
 		}
 
+		// atribuir e limpar framebuffer para desenho
 		public void BeginRender()
 		{
 			GL.BindFramebuffer(FramebufferTarget.Framebuffer, MSFBO);
@@ -81,6 +89,8 @@ namespace TP1
 			GL.Clear(ClearBufferMask.ColorBufferBit);
 		}
 
+		// transferir os dados do framebuffer de múltiplas amostras para o framebuffer onde
+		// os efeitos serão aplicados
 		public void EndRender()
 		{
 			GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, MSFBO);
@@ -89,6 +99,7 @@ namespace TP1
 			GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 		}
 
+		// aplicar efeitos de acordo com os estados ativos
 		public void Render(float time)
 		{
 			PostProcessingShader.Use();
@@ -104,6 +115,7 @@ namespace TP1
 			GL.BindVertexArray(0);
 		}
 
+		// inicializar os arrays e buffers do OpenGL
 		private void InitRenderData()
 		{
 			int VBO;

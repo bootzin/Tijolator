@@ -22,7 +22,8 @@ namespace TP1
 		public GameObject Player { get; set; }
 		private Vector2 PLAYER_SIZE = new Vector2(150, 20);
 		private float PLAYER_VELOCITY = 8f;
-		private int Lives = 3;
+		private int Lives;
+		private int score = 0;
 		public Difficulty Difficulty { get; set; }
 		public List<Difficulty> Difficulties { get; set; } = new List<Difficulty>();
 
@@ -44,10 +45,12 @@ namespace TP1
 
 		public Game(int width, int height, string title) : base(width, height, GraphicsMode.Default, title, GameWindowFlags.FixedWindow)
 		{
+			// iniciar a viewport e habilitar o uso de "alpha" para determinação de opacidade
 			GL.Viewport(0, 0, width, height);
 			GL.Enable(EnableCap.Blend);
 			GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
+			// determinar as dificuldades do jogo
 			Difficulties.Add(new Difficulty("Facil", -12f, .65, 3, 3, 5)
 			{
 				PowerUpTypes = new List<string>()
@@ -85,13 +88,16 @@ namespace TP1
 				}
 			});
 
+			//dificuldade inicial é média
 			Difficulty = Difficulties[1];
 
 			Init();
 		}
 
+		//Método responsável por inicializar todos os recursos utilizados no jogo
 		public void Init()
 		{
+			// carregar sons
 			var bgm = ResourceManager.LoadSound("resources/bgm.mp3", "bgm", true);
 			SoundEngine.Instance.PlaySound(bgm);
 
@@ -100,11 +106,15 @@ namespace TP1
 			ResourceManager.LoadSound("resources/solid.wav", "solid");
 			ResourceManager.LoadSound("resources/bleep.mp3", "bleepBrick");
 
+			//carregar shaders
 			ResourceManager.LoadShader("shaders/sprite.vert", "shaders/sprite.frag", "sprite");
 			ResourceManager.LoadShader("shaders/particle.vert", "shaders/particle.frag", "particle");
 			ResourceManager.LoadShader("shaders/postProcessing.vert", "shaders/postProcessing.frag", "postProcessing");
 
+			//instanciar a matriz de projeção ortogonal
 			var projection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -1, 1);
+
+			// instanciar o renderizador padrão de texturas
 			var spriteshader = ResourceManager.GetShader("sprite");
 			var particleshader = ResourceManager.GetShader("particle");
 			spriteshader.SetInteger("image", 0, true);
@@ -113,6 +123,7 @@ namespace TP1
 			particleshader.SetMatrix4("projection", projection, true);
 			Renderer = new Renderer2D(spriteshader);
 
+			// carregar as texturas do jogo
 			ResourceManager.LoadTexture("resources/ball.png", "ball");
 			ResourceManager.LoadTexture("resources/paddle.png", "paddle");
 			ResourceManager.LoadTexture("resources/block.png", "block", false);
@@ -130,6 +141,7 @@ namespace TP1
 			ResourceManager.LoadTexture("resources/confuse.png", "confuse");
 			ResourceManager.LoadTexture("resources/skull.png", "chaos");
 
+			//carregar os níveis disponíveis no jogo
 			GameLevel one = new GameLevel();
 			one.Load("levels/one.lvl", Width, Height / 2);
 			GameLevel two = new GameLevel();
@@ -150,26 +162,38 @@ namespace TP1
 			Levels.Add(six);
 			Level = 4;
 
+			// instanciar jogador
 			const float offset = 84f;
 			Vector2 playerStartPos = new Vector2((Width / 2) - (PLAYER_SIZE.X / 2), Height - PLAYER_SIZE.Y - offset);
 			Player = new GameObject(playerStartPos, PLAYER_SIZE, ResourceManager.GetTex("paddle"));
 
+			// quantidade de vidas de acordo com a dificuldade
+			Lives = Difficulty.LifeAmount;
+
+			// instanciar bola
 			Vector2 ballStartPos = playerStartPos + new Vector2((Player.Size.X / 2f) - BALL_RADIUS, -BALL_RADIUS * 2f);
 			Ball = new BallObject(ballStartPos, BALL_RADIUS, ResourceManager.GetTex("ball"), Color.Pink.ToVector3(), velocity: new Vector2(GetRandomBallSpeed(), Difficulty.BallUpSpeed));
 			Balls.Add(Ball);
 
+			// instanciar gerador de partículas para efeito de "rastro"
 			ParticleGenerator = new ParticleGenerator(ResourceManager.GetShader("particle"), ResourceManager.GetTex("particle"), 500);
 
+			// instanciar classe responsável pelos efeitos de pós-processamento
 			PostProcessor = new PostProcessor(ResourceManager.GetShader("postProcessing"), Width, Height);
 
+			// iniciar renderizador de texto
 			TextRenderer = new TextRenderer(Width, Height);
 			TextRenderer.Load("fonts/ocraext.TTF", 24);
+
+			// iniciar overlay para tela de "pause"
 			Overlay = new Texture2D();
 			Overlay.Generate(Width, Height, IntPtr.Zero);
 
+			// setar a posição inicial do mouse para o meio da tela
 			var point = PointToScreen(new Point(Width / 2, Height / 2));
 			Mouse.SetPosition(point.X, point.Y);
 
+			// estado inicial do jogo deve ser o menu
 			State = GameState.Menu;
 		}
 
@@ -180,8 +204,10 @@ namespace TP1
 				base.OnUpdateFrame(e);
 				ProcessEvents();
 
+				// remover todas as bolas que saíram da tela
 				Balls.RemoveAll(b => b.Position.Y >= Height);
 
+				// condição de derrota
 				if (Balls.Count == 0)
 				{
 					Lives--;
@@ -194,6 +220,7 @@ namespace TP1
 					Balls.Add(Ball);
 					ResetPlayer();
 				}
+				// caso contrário, selecionar a bola principal como uma das bolas restantes
 				else
 				{
 					Ball = Balls[0];
@@ -201,6 +228,7 @@ namespace TP1
 						Ball.Color = new Vector3(1);
 				}
 
+				// mover o jogador de acordo com a posição do mouse
 				float x = Math.Max(Math.Min((float)(Player.Position.X + (PLAYER_VELOCITY * e.Time)), Width - Player.Size.X), 0);
 				if (x <= 0 || x >= Width - Player.Size.X)
 				{
@@ -212,6 +240,7 @@ namespace TP1
 				}
 				Player.Position = new Vector2(x, Player.Position.Y);
 
+				// mover todas as bolas existentes na tela
 				Balls.ForEach(ball =>
 				{
 					ball.Move((float)e.Time, Width);
@@ -219,49 +248,70 @@ namespace TP1
 						ball.Position += Player.Velocity;
 				});
 
+				// atualizar a posição das partículas de rastro da bola principal
 				ParticleGenerator.Update((float)e.Time, Ball, 2, new Vector2(Ball.Radius / 2f));
 
+				// atualizar o estado de todos os powerups
 				UpdatePowerUps((float)e.Time);
 
+				// checar colisão
 				DoCollisions();
 
+				// atualizar o tempo restante do efeito de "shake"
 				if (shakeTime > 0)
 				{
 					shakeTime -= (float)e.Time;
 					if (shakeTime <= 0)
 						PostProcessor.Shake = false;
 				}
+
+				score = Levels[Level].GetScore();
 			}
 		}
 
 		protected override void OnRenderFrame(FrameEventArgs e)
 		{
 			base.OnRenderFrame(e);
-
+			// limpar o buffer de cor do openGL
 			GL.Clear(ClearBufferMask.ColorBufferBit);
 
+			// encapsular a renderização de objetos para permitir efeitos de pós-processamento
 			PostProcessor.BeginRender();
+			//renderizar o background
 			Renderer.DrawTexture(ResourceManager.GetTex("breakout_bg"), Vector2.Zero, new Vector2(Width, Height), 0, Vector3.One);
+			// desenhar os "tijolos"
 			Levels[Level].Draw(Renderer);
+			//desenhar o jogador
 			Player.Draw(Renderer);
+			//desenhar as partículas de rastro
 			ParticleGenerator.Draw();
+			//desenhar todas as bolas
 			Balls.ForEach(ball => ball.Draw(Renderer));
+			//desenhar os powerups
 			PowerUps.ForEach(p =>
 			{
 				if (!p.Destroyed)
 					p.Draw(Renderer);
 			});
 			PostProcessor.EndRender();
+			// aplicar efeitos de pós-processamento
 			PostProcessor.Render((float)e.Time);
 
+			// renderizar textos informativos na tela, dependendo do estado do jogo.
+			// textos não devem passar pelos efeitos de pós processamento
+			// suporte a acentuação não foi implementado
 			if (State == GameState.Active || State == GameState.Paused)
 			{
 				TextRenderer.RenderText($"Vidas: {Lives}", 5, 5, 1);
 				TextRenderer.RenderText("Efeitos:", 15, Height - 75, .95f);
+
+				// instrução de pressionar espaço só deve ser exibida até que o jogador pressione espaço
 				if (drawInstruction)
 				{
 					TextRenderer.RenderText("Pressione espaco", (Width / 2) - 120f, (Height / 2) + 80f, 1);
 				}
+
+				// desenhar os powerups que estão ativos no momento
 				for (int i = 0; i < PowerUps.Count; i++)
 				{
 					if (PowerUps[i].Active)
@@ -275,6 +325,7 @@ namespace TP1
 				TextRenderer.RenderText("Pressione I para INFO", (Width / 2f) - 95f, (Height / 2f) + 80f, .6f);
 				TextRenderer.RenderText($"Dificuldade: {Difficulty.Name}", (Width / 2) - 110, Height * .7f, .8f);
 
+				// tela informativa com instruções sobre como jogar
 				if (showInfo)
 				{
 					Renderer.DrawTexture(Overlay, Vector2.Zero, new Vector2(Width, Height), 0, Color.DarkSlateGray.ToVector4(.8f));
@@ -302,6 +353,11 @@ namespace TP1
 				TextRenderer.RenderText("Perdeste! :(", (Width / 2f) - 75f, (Height / 2f) - 100f, 1f, new Vector3(1f, 0f, 0f));
 				TextRenderer.RenderText("Pressione R para voltar ao menu", (Width / 2f) - 225f, (Height / 2f) - 70f, 1f, Vector3.Zero);
 			}
+
+			if (State != GameState.Menu)
+				TextRenderer.RenderText($"Score: {score}", Width - 150, 5, 1, State == GameState.Lost ? Vector3.Zero : Vector3.One);
+
+			// condição de vitória
 			if (State == GameState.Active && Levels[Level].IsCompleted())
 			{
 				Levels[Level].Reload(Width, Height / 2);
@@ -309,12 +365,14 @@ namespace TP1
 				State = GameState.Win;
 			}
 
+			// pause decorrente do botão direito do mouse
 			if (shouldPause)
 			{
 				State = GameState.Paused;
 				shouldPause = false;
 				LogInfo();
 			}
+
 			if (State == GameState.Paused)
 			{
 				Renderer.DrawTexture(Overlay, Vector2.Zero, new Vector2(Width, Height), 0, Color.DarkSlateGray.ToVector4(.4f));
@@ -330,23 +388,28 @@ namespace TP1
 			Context.SwapBuffers();
 		}
 
+		// evento de ajuste do tamanho da tela, desabilitado
 		protected override void OnResize(EventArgs e)
 		{
 			base.OnResize(e);
 			GL.Viewport(0, 0, Width, Height);
 		}
 
+		// tratar teclas pressionadas
 		protected override void OnKeyDown(KeyboardKeyEventArgs e)
 		{
 			base.OnKeyDown(e);
+			// sair do jogo
 			if (e.Key == Key.Q)
 			{
 				Close();
 			}
+			// reiniciar o jogo
 			if (e.Key == Key.R)
 			{
 				Reset();
 			}
+			// soltar a bola do paddle
 			if (State == GameState.Active && e.Key == Key.Space)
 			{
 				drawInstruction = false;
@@ -354,6 +417,7 @@ namespace TP1
 			}
 			if (State == GameState.Menu)
 			{
+				// selecionar a fase com 'W' e 'S'
 				if (e.Key == Key.W)
 				{
 					if (showInfo)
@@ -371,6 +435,7 @@ namespace TP1
 					else
 						Level = Levels.Count - 1;
 				}
+				// começar o jogo com a fase ativa
 				if (e.Key == Key.Enter)
 				{
 					drawInstruction = true;
@@ -380,22 +445,26 @@ namespace TP1
 					else
 						State = GameState.Active;
 				}
+				// mostrar/esconder informações
 				if (e.Key == Key.I)
 				{
 					showInfo = !showInfo;
 				}
 			}
+			// 'cheat' para pular para a tela de vitória
 			if (e.Key == Key.L)
 			{
 				Levels[Level].Reload(Width, Height / 2);
 				PostProcessor.Chaos = true;
 				State = GameState.Win;
 			}
+			// 'cheat' para pular para a tela de derrota
 			if (e.Key == Key.K)
 			{
 				PostProcessor.Confuse = true;
 				State = GameState.Lost;
 			}
+			// alterar dificuldade
 			if (e.Key == Key.Number1)
 			{
 				Difficulty = Difficulties[0];
@@ -413,9 +482,11 @@ namespace TP1
 		protected override void OnMouseMove(MouseMoveEventArgs e)
 		{
 			base.OnMouseMove(e);
+			// atualizar velocidade do jogador com base na posição do mouse
 			PLAYER_VELOCITY = (e.X - (Width / 2)) * Difficulty.PlayerSpeedMod;
 		}
 
+		//tratar pause 
 		protected override void OnMouseDown(MouseButtonEventArgs e)
 		{
 			if (e.Button == MouseButton.Left)
@@ -455,6 +526,8 @@ namespace TP1
 
 		private void DoCollisions()
 		{
+			// para cada bola ativa, verificar quais blocos colidem com a bola, 
+			// e se alguma delas colide com o paddle ou não. Aplicar os efeitos da colisão
 			Balls.ForEach(ball =>
 			{
 				foreach (GameObject box in Levels[Level].Bricks)
@@ -464,19 +537,23 @@ namespace TP1
 					{
 						if (!box.IsSolid)
 						{
+							// quebrar o bloco e criar um powerup, se aplicável
 							box.Destroyed = true;
 							SpawnPowerUps(box);
 							SoundEngine.Instance.PlaySound(ResourceManager.GetSound("bleepBrick"));
 						}
 						else
 						{
+							// aplicar efeito de "balanço" e "borrado" da tela
 							PostProcessor.Shake = true;
 							shakeTime = .05f;
 							SoundEngine.Instance.PlaySound(ResourceManager.GetSound("solid"));
 						}
 
+						// refletir a bola na direção apropriada
 						if (!ball.Comet || box.IsSolid)
 						{
+							// 'pen' representa o quanto a bola se moveu para dentro do bloco
 							float pen;
 							switch (col.Direction)
 							{
@@ -498,10 +575,12 @@ namespace TP1
 										ball.Position = new Vector2(ball.Position.X, ball.Position.Y + pen);
 									break;
 							}
+							// evitar múltiplas colisões em um único frame, devido à erros de reflexão
 							break;
 						}
 					}
 				}
+
 				Collision playerBallCol = ball.CheckCollision(Player);
 				if (!ball.Stuck && playerBallCol.Colliding)
 				{
@@ -509,6 +588,7 @@ namespace TP1
 					float distance = ball.Position.X + ball.Radius - paddleCenter;
 					float percentage = distance / (Player.Size.X / 2);
 
+					// refletir a bola mantendo a magnitude da velocidade
 					float velocityMag = Ball.Velocity.Length;
 					var relativeVelocity = new Vector2(BALL_X_SPEED * percentage * 2, -Math.Abs(ball.Velocity.Y));
 					ball.Velocity = relativeVelocity.Normalized() * velocityMag;
@@ -517,6 +597,7 @@ namespace TP1
 				}
 			});
 
+			// verificar a colisão de powerups com o paddle e ativá-los se necessário
 			foreach (PowerUp power in PowerUps)
 			{
 				if (!power.Destroyed)
@@ -534,6 +615,7 @@ namespace TP1
 			}
 		}
 
+		// aplicar efeitos específicos dependendo do tipo do powerup
 		private void ActivatePowerUp(PowerUp power)
 		{
 			switch (power.Type)
@@ -542,10 +624,12 @@ namespace TP1
 					Balls.ForEach(ball => ball.Velocity *= 1.5f);
 					break;
 				case "sticky":
+					// sticky faz a bola grudar no paddle quando colide
 					Balls.ForEach(ball => ball.Sticky = true);
 					Player.Color = Color.PaleGreen.ToVector3();
 					break;
 				case "comet":
+					// comet faz a bola ignorar colisão com os 'tijolos'
 					Balls.ForEach(ball =>
 					{
 						ball.Comet = true;
@@ -572,6 +656,8 @@ namespace TP1
 
 		private void SpawnBalls(int amount)
 		{
+			// cria uma quantidade de bolas de acordo com a dificuldade
+			// e aplica uma variação aleatória na direção horizontal dela
 			for (int i = 0; i < amount; i++)
 			{
 				var ball = new BallObject(Ball.Position, Ball.Radius, Ball.Sprite, Color.Aqua.ToVector3(), new Vector2(Ball.Velocity.X + ((float)Util.Random.NextDouble() * 2f), Ball.Velocity.Y))
@@ -584,6 +670,8 @@ namespace TP1
 
 		private void SpawnPowerUps(GameObject brick)
 		{
+			// caso um double aleatório seja maior que a chance de criar um powerup 
+			// da dificuldade atual, um powerup aleatório é gerado
 			if (Util.Random.NextDouble() > Difficulty.PowerUpChance)
 			{
 				List<string> types = Difficulty.PowerUpTypes;
@@ -593,14 +681,17 @@ namespace TP1
 			}
 		}
 
-		private void UpdatePowerUps(float dt)
+		private void UpdatePowerUps(float deltaTime)
 		{
+			// para cada powerup, atualizar a posição e a duração dele
 			for (int i = 0; i < PowerUps.Count; i++)
 			{
 				PowerUps[i].Position += PowerUps[i].Velocity;
 				if (PowerUps[i].Active)
 				{
-					PowerUps[i].Duration -= dt;
+					PowerUps[i].Duration -= deltaTime;
+
+					//se o powerup se tornar inativo, remover os efeitos que ele havia aplicado
 					if (PowerUps[i].Duration <= 0)
 					{
 						PowerUps[i].Active = false;
@@ -638,6 +729,8 @@ namespace TP1
 						}
 					}
 				}
+
+				// remover powerups inativos
 				if (!PowerUps[i].Active && PowerUps[i].Destroyed)
 				{
 					PowerUps.RemoveAt(i);
@@ -645,19 +738,21 @@ namespace TP1
 			}
 		}
 
+		// retornar o jogo para as condições iniciais
 		private void Reset()
 		{
 			State = GameState.Menu;
 			Levels.Clear();
 			UpdatePowerUps(100000f);
 			PowerUps.Clear();
-			Lives = 3;
 			PostProcessor.Chaos = false;
 			PostProcessor.Confuse = false;
 			Balls.Clear();
 			Init();
 		}
 
+		// retornar o jogador, powerups, efeitos e bolas para o estado inicial
+		// mas sem alterar o estado do nível atual
 		private void ResetPlayer()
 		{
 			UpdatePowerUps(100000);
@@ -671,6 +766,7 @@ namespace TP1
 			Ball.Size = new Vector2(2f * BALL_RADIUS);
 		}
 
+		// gravar informações a respeito dos objetos
 		private void LogInfo()
 		{
 			StringBuilder sb = new StringBuilder();
@@ -721,6 +817,7 @@ namespace TP1
 			lines = text.Split('\n');
 		}
 
+		// obter uma velocidade aleatória para o eixo X da bola.
 		private float GetRandomBallSpeed()
 		{
 			if (Util.Random.NextDouble() > .5)

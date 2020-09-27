@@ -2,6 +2,7 @@
 
 namespace TP1
 {
+	// classe para armazenar dados de som
 	public class Sound
 	{
 		public float[] AudioData { get; set; }

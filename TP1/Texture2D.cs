@@ -3,6 +3,7 @@ using System;
 
 namespace TP1
 {
+	// classe para armazenar as informações de textura
 	public class Texture2D
 	{
 		public int ID { get; set; }
@@ -28,6 +29,7 @@ namespace TP1
 			ID = GL.GenTexture();
 		}
 
+		// gerar e carregar dados da textura no OpenGL
 		public void Generate(int width, int height, IntPtr data)
 		{
 			Width = width;
@@ -41,6 +43,7 @@ namespace TP1
 			GL.BindTexture(TextureTarget.Texture2D, 0);
 		}
 
+		// determinar essa textura como a textura ativa no openGl
 		public void Bind()
 		{
 			GL.BindTexture(TextureTarget.Texture2D, ID);
