@@ -3,7 +3,7 @@
 </p>
 
 # Tijolator
-This is a 2d breakout game that I made in order to learn more about openGL and shaders in general. The game has multiple levels available from the main menu, as well as 3 difficulty settings: Easy, Medium and Hard. The language of the game is portuguese, but gameplay is not very influenced by language, so anyone can enjoy it!
+This is a 2d breakout game that I made in order to learn more about openGL and shaders in general. The game has multiple levels available from the main menu, as well as 3 difficulty settings: Easy, Medium and Hard. The language of the game is portuguese, but gameplay is not very influenced by language, so anyone can enjoy it! Available for both Windows and Linux!
 
 # Controls
 On the main menu:
